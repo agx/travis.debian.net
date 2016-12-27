@@ -284,7 +284,7 @@ RUN git config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*'
 RUN git fetch
 RUN for X in \$(git branch -r | grep -v HEAD); do git branch --track \$(echo "\${X}" | sed -e 's@.*/@@g') \${X} || true; done
 
-CMD ${TRAVIS_DEBIAN_GIT_BUILDPACKAGE} ${TRAVIS_DEBIAN_GIT_BUILDPACKAGE_OPTIONS} --git-ignore-branch --git-export-dir=${TRAVIS_DEBIAN_BUILD_DIR} --git-builder='debuild -i -I -uc -us -sa'
+CMD echo \$CCACHE_DIR && echo \$PATH && ${TRAVIS_DEBIAN_GIT_BUILDPACKAGE} ${TRAVIS_DEBIAN_GIT_BUILDPACKAGE_OPTIONS} --git-ignore-branch --git-export-dir=${TRAVIS_DEBIAN_BUILD_DIR} --git-builder='debuild -i -I -uc -us -sa' && find \$CCACHE_DIR
 EOF
 
 Info "Using Dockerfile:"
@@ -307,7 +307,9 @@ then
 fi
 
 Info "Running build"
+set -x
 docker run --env=DEB_BUILD_OPTIONS="${DEB_BUILD_OPTIONS:-}" ${ARGS} ${TAG}
+set +x
 
 Info "Copying build artefacts to ${TRAVIS_DEBIAN_TARGET_DIR}"
 mkdir -p "${TRAVIS_DEBIAN_TARGET_DIR}"
