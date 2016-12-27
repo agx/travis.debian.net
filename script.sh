@@ -211,6 +211,7 @@ RUN echo "deb-src ${TRAVIS_DEBIAN_MIRROR} experimental main" >> /etc/apt/sources
 EOF
 fi
 
+ARGS=""
 EXTRA_PACKAGES=""
 
 case "${TRAVIS_DEBIAN_EXTRA_REPOSITORY:-}" in
@@ -222,6 +223,19 @@ esac
 if [ "${TRAVIS_DEBIAN_EXTRA_REPOSITORY_GPG_URL:-}" != "" ]
 then
 	EXTRA_PACKAGES="${EXTRA_PACKAGES} wget gnupg"
+fi
+
+
+TRAVIS_DEBIAN_CCACHE="${TRAVIS_DEBIAN_CCACHE:-true}"
+if [ "${TRAVIS_DEBIAN_CCACHE}" = "true" ]
+then
+        Info "Enabling ccache"
+        cat >>Dockerfile <<EOF
+ENV CCACHE_DIR /ccache
+ENV PATH /usr/lib/ccache:\$PATH
+EOF
+        ARGS="${ARGS} --volume=${HOME}/.ccache:/ccache"
+        EXTRA_PACKAGES="${EXTRA_PACKAGES} ccache"
 fi
 
 cat >>Dockerfile <<EOF
@@ -285,7 +299,7 @@ Info "Removing Dockerfile"
 rm -f Dockerfile
 
 CIDFILE="$(mktemp --dry-run)"
-ARGS="--cidfile=${CIDFILE}"
+ARGS="${ARGS} --cidfile=${CIDFILE}"
 
 if [ "${TRAVIS_DEBIAN_NETWORK_ENABLED}" != "true" ]
 then
